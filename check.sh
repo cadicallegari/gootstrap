@@ -28,6 +28,10 @@ echo "checking"
 make test
 
 echo
+echo "checking integration"
+make test-integration
+
+echo
 echo "analyzing"
 make static-analysis
 
