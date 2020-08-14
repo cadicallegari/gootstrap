@@ -30,7 +30,4 @@ Run:` +
 	`
 It will create a git tag with the provided **<version>**
 and build and publish a docker image.
-
-## Git Hooks
-
-To install the project githooks run:` + "\n\n```\nmake githooks\n```\n"
+`

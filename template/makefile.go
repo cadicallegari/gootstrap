@@ -1,10 +1,10 @@
 package template
 
-const Makefile = `export version ?= latest
-
-appname = {{.Project}}
+const Makefile = `appname = {{.Project}}
 img =  {{.DockerImg}}:$(version)
 imgdev = {{.DockerImg}}dev:$(version)
+
+export docker_image ?= $(imgdev)
 
 wd = $(shell pwd)
 
@@ -45,7 +45,7 @@ test: dev-build ## Run unit tests, set testcase=<testcase> or flag=-v if you nee
 .PHONY: test-integration
 test-integration: override testflag+=-tags=integration ## Run integration tests, set pkg=<pkg to test> testcase=<testcase> or flag=-v if you need them
 test-integration: dev-build
-	$(rundev) $(gotest)
+	$(composerundev) $(gotest)
 
 .PHONY: coverage
 coverage: override vols+=-v $(wd):/app ## show test coverage
@@ -68,6 +68,8 @@ fmt: dev-build ## run gofmt
 static-analysis: fmt lint ## run gofmt and golangci-lint
 
 .PHONY: run
-run: ## run the code with given params
-	@docker run --rm -v $(wd):/files $(img) -file files/$(file) -query "$(query)"
+run: override docker_image=$(img)
+run: override docker_params+=--service-ports
+run: build  ## run the code with given params
+	$(composerundev)
 `

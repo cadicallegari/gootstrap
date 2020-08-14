@@ -6,6 +6,6 @@ version: '3'
 services:
 
   {{.Project}}:
-    image: {{.DockerImg}}dev:${version}
+    image: ${docker_image}
 
 `
