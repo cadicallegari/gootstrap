@@ -1,3 +1,3 @@
 package template
 
-const DockerIgnore = ``
+const DockerIgnore = `.cov`

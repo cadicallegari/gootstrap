@@ -1,11 +1,14 @@
 package template
 
-const Makefile = `version ?= latest
-appname = corporation-directory
+const Makefile = `appname = {{.Project}}
 img =  {{.DockerImg}}:$(version)
 imgdev = {{.DockerImg}}dev:$(version)
 
+export docker_image ?= $(imgdev)
+
 wd = $(shell pwd)
+
+composerundev = docker-compose run --rm {{.Project}}
 
 dockerrunbase = docker run --rm $(vols)
 rundev = $(dockerrunbase) $(imgdev)
@@ -13,8 +16,10 @@ rundev = $(dockerrunbase) $(imgdev)
 cov = coverage.out
 covhtml = coverage.html
 
-testflag ?= -race -timeout 60s -coverprofile=$(cov) $(flag)
-gotest = go test -failfast ./... $(testflag) $(if $(testcase),-run "$(testcase)")
+pkg ?= ./...
+testtimeout ?= 30s
+testflag ?= -race -timeout $(timeout) -coverprofile=$(cov) $(flag)
+gotest = go test -failfast $(pkg) $(testflag) $(if $(testcase),-run "$(testcase)")
 
 all: static-analysis test test-integration dev-build build
 
@@ -27,7 +32,7 @@ help: ## display this help
 
 .PHONY: build
 build: ## build final image
-	docker build . -t $(img) --build-arg VERSION=$(version)
+	docker build --build-arg VERSION=$(version) . -t $(img)
 
 .PHONY: dev-build
 dev-build: ## build dev image
@@ -35,7 +40,12 @@ dev-build: ## build dev image
 
 .PHONY: test
 test: dev-build ## Run unit tests, set testcase=<testcase> or flag=-v if you need them
-	$(rundev) $(gotest)
+	$(composerundev) $(gotest)
+
+.PHONY: test-integration
+test-integration: override testflag+=-tags=integration ## Run integration tests, set pkg=<pkg to test> testcase=<testcase> or flag=-v if you need them
+test-integration: dev-build
+	$(composerundev) $(gotest)
 
 .PHONY: coverage
 coverage: override vols+=-v $(wd):/app ## show test coverage
@@ -58,6 +68,8 @@ fmt: dev-build ## run gofmt
 static-analysis: fmt lint ## run gofmt and golangci-lint
 
 .PHONY: run
-run: ## run the code with given params
-	@docker run --rm -v $(wd):/files $(img) -file files/$(file) -query "$(query)"
+run: override docker_image=$(img)
+run: override docker_params+=--service-ports
+run: build  ## run the code with given params
+	$(composerundev)
 `
