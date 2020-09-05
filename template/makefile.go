@@ -1,6 +1,7 @@
 package template
 
-const Makefile = `appname = {{.Project}}
+const Makefile = `version ?= latest
+appname = {{.Project}}
 img =  {{.DockerImg}}:$(version)
 imgdev = {{.DockerImg}}dev:$(version)
 
